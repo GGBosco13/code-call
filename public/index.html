@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CodeCall</title>
+<link rel="icon" href="data:," />
+<style>
+  :root {
+    --bg1: #0b1020;
+    --bg2: #101a33;
+    --card: rgba(255,255,255,0.055);
+    --line: rgba(255,255,255,0.12);
+    --text: #eef2ff;
+    --muted: #93a0bf;
+    --accent: #6366f1;
+    --accent2: #22d3ee;
+    --danger: #ef4444;
+    --ok: #34d399;
+    --warn: #f59e0b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(900px 500px at 15% -10%, rgba(99,102,241,0.28), transparent 60%),
+      radial-gradient(800px 500px at 110% 110%, rgba(34,211,238,0.18), transparent 60%),
+      linear-gradient(160deg, var(--bg1), var(--bg2));
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    width: 100%; max-width: 400px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 26px;
+    padding: 42px 32px 34px;
+    text-align: center;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+  }
+  .hidden { display: none !important; }
+
+  /* ---- logo ---- */
+  .logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 28px; }
+  .logo-badge {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+  }
+  .logo-title { font-size: 24px; font-weight: 750; letter-spacing: 0.5px; }
+
+  /* ---- buttons ---- */
+  .btn-primary {
+    width: 100%; padding: 17px; border: 0; border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6 55%, var(--accent2));
+    color: #fff; font-size: 17px; font-weight: 650; cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+    box-shadow: 0 12px 30px rgba(99,102,241,0.35);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(99,102,241,0.45); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost {
+    margin-top: 22px; background: none; border: 0; color: var(--muted);
+    font-size: 14px; cursor: pointer; text-decoration: underline;
+  }
+  .btn-ghost:hover { color: var(--text); }
+
+  /* ---- home ---- */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted); font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; margin: 22px 0;
+  }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .join-row { display: flex; gap: 10px; }
+  #code-input {
+    flex: 1; min-width: 0;
+    background: rgba(0,0,0,0.25); border: 1px solid var(--line); border-radius: 14px;
+    padding: 15px 18px; color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 20px; letter-spacing: 6px; text-transform: uppercase; text-align: center;
+    outline: none;
+  }
+  #code-input::placeholder { color: rgba(147,160,191,0.55); letter-spacing: 4px; }
+  #code-input:focus { border-color: var(--accent); }
+  #btn-call {
+    padding: 0 22px; border: 0; border-radius: 14px;
+    background: rgba(255,255,255,0.09); border: 1px solid var(--line);
+    color: var(--text); font-size: 16px; font-weight: 600; cursor: pointer;
+    transition: background .12s;
+  }
+  #btn-call:hover { background: rgba(255,255,255,0.16); }
+  .hint { color: var(--muted); font-size: 13px; line-height: 1.55; margin: 18px 0 0; }
+  .footer { color: rgba(147,160,191,0.6); font-size: 11px; margin-top: 26px; letter-spacing: 1px; }
+
+  /* ---- waiting / connecting ---- */
+  .label { color: var(--muted); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 4px; }
+  .code-display {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 52px; font-weight: 700; letter-spacing: 14px; text-indent: 14px;
+    cursor: pointer; user-select: all;
+    background: linear-gradient(90deg, #ffffff, var(--accent2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 18px rgba(34,211,238,0.35));
+    margin: 8px 0 14px;
+  }
+  .chip {
+    background: rgba(255,255,255,0.08); border: 1px solid var(--line); color: var(--text);
+    padding: 8px 18px; border-radius: 999px; font-size: 13px; cursor: pointer;
+    transition: background .12s;
+  }
+  .chip:hover { background: rgba(255,255,255,0.14); }
+  .status { color: var(--text); font-size: 15px; margin: 20px 0 0; }
+  .pulse { position: relative; width: 64px; height: 64px; margin: 26px auto 0; }
+  .pulse::before, .pulse::after {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid var(--accent2);
+    animation: pulse 2s ease-out infinite;
+  }
+  .pulse::after { animation-delay: 1s; }
+  .pulse .dot {
+    position: absolute; inset: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+  }
+  @keyframes pulse {
+    0%   { transform: scale(0.55); opacity: 0.9; }
+    100% { transform: scale(1.5);  opacity: 0; }
+  }
+  #connecting-text { font-size: 17px; margin: 24px 0 0; }
+  .conn-sub { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+
+  /* ---- in call ---- */
+  .avatar {
+    width: 92px; height: 92px; border-radius: 50%;
+    margin: 4px auto 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.35), rgba(34,211,238,0.35));
+    border: 1px solid var(--line);
+  }
+  .call-name { font-size: 22px; font-weight: 650; margin: 0 0 4px; }
+  .call-sub { color: var(--ok); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px; }
+  .call-timer {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 40px; font-weight: 600; margin-bottom: 34px;
+    font-variant-numeric: tabular-nums;
+  }
+  .controls { display: flex; justify-content: center; gap: 26px; }
+  .ctrl {
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 1px solid var(--line); background: rgba(255,255,255,0.07);
+    color: var(--text); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .12s, color .12s;
+  }
+  .ctrl:hover { background: rgba(255,255,255,0.14); }
+  .ctrl.active { background: var(--warn); border-color: var(--warn); color: #1a1a1a; }
+  .ctrl.end {
+    width: 74px; height: 74px;
+    background: var(--danger); border-color: var(--danger); color: #fff;
+    box-shadow: 0 12px 30px rgba(239,68,68,0.4);
+  }
+  .ctrl.end:hover { background: #dc2626; }
+
+  /* ---- toast ---- */
+  .warn-banner {
+    background: rgba(245,158,11,0.12);
+    border: 1px solid rgba(245,158,11,0.4);
+    color: #fcd34d;
+    font-size: 13px; line-height: 1.5;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+  }
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: #1e293b; border: 1px solid var(--line); color: var(--text);
+    padding: 12px 20px; border-radius: 12px; font-size: 14px; max-width: 90vw;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5); z-index: 10;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- ============ HOME ============ -->
+  <section id="screen-home" class="screen">
+    <div class="logo">
+      <div class="logo-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      </div>
+      <div class="logo-title">CodeCall</div>
+    </div>
+
+    <div id="https-warning" class="warn-banner hidden">
+      ⚠️ Browsers only allow microphone access over HTTPS. To make calls, open this app at an <b>https://</b> address.
+    </div>
+
+    <button id="btn-start" class="btn-primary">Start a Call</button>
+
+    <div class="divider">or</div>
+
+    <div class="join-row">
+      <input id="code-input" maxlength="5" placeholder="CODE" spellcheck="false" autocomplete="off" />
+      <button id="btn-call">Call</button>
+    </div>
+
+    <p class="hint">Start a call to get a 5&#8209;character code. Share it — the other person types it in and hits Call.</p>
+    <div class="footer">AUDIO CALLS · WEBRTC · NO ACCOUNTS</div>
+  </section>
+
+  <!-- ============ WAITING (host) ============ -->
+  <section id="screen-waiting" class="screen hidden">
+    <p class="label">Your call code</p>
+    <div id="code-display" title="Click to copy">·····</div>
+    <button id="btn-copy" class="chip">Copy code</button>
+
+    <p id="waiting-status" class="status">Waiting for someone to join…</p>
+    <div class="pulse"><div class="dot"></div></div>
+    <p id="local-url-hint" class="hint hidden"></p>
+    <button id="btn-cancel" class="btn-ghost">Cancel</button>
+  </section>
+
+  <!-- ============ CONNECTING (caller) ============ -->
+  <section id="screen-connecting" class="screen hidden">
+    <div class="pulse"><div class="dot"></div></div>
+    <p id="connecting-text">Calling…</p>
+    <p class="conn-sub">Waiting for the other side to pick up</p>
+    <button id="btn-cancel-call" class="btn-ghost">Cancel</button>
+  </section>
+
+  <!-- ============ IN CALL ============ -->
+  <section id="screen-call" class="screen hidden">
+    <div class="avatar">👤</div>
+    <h2 id="call-name" class="call-name">Your call</h2>
+    <p class="call-sub">Connected</p>
+    <div id="call-timer" class="call-timer">00:00</div>
+    <div class="controls">
+      <button id="btn-mute" class="ctrl" title="Mute">
+        <svg class="ic-mic" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+        <svg class="ic-mic-off hidden" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.06-2.1-5.4-4.77H2v-2h5.27l7.01 7.02 1.27 1.27 1.27-1.27-9.55-9.55z"/></svg>
+      </button>
+      <button id="btn-end" class="ctrl end" title="End call">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.996.996 0 0 1-.29-.7c0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.7 11.7 0 0 0-2.66-1.85.999.999 0 0 1-.56-.9v-3.1C15.15 9.25 13.6 9 12 9Z"/></svg>
+      </button>
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<audio id="remote-audio" autoplay playsinline></audio>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const remoteAudio = $('remote-audio');
+  const PORT = location.port || '3000';
+
+  let pc = null, localStream = null, es = null;
+  let role = null, code = null;
+  let inCall = false, callStart = 0, timerInterval = null, noAnswerTimeout = null;
+  let pendingCandidates = [];
+  let ringTimer = null, audioCtx = null, muted = false;
+
+  /* ---------------- UI helpers ---------------- */
+  function show(id) {
+    ['screen-home', 'screen-waiting', 'screen-connecting', 'screen-call']
+      .forEach((s) => $(s).classList.toggle('hidden', s !== id));
+  }
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.add('hidden'), 3500);
+  }
+  function genCode() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    let c = '';
+    for (let i = 0; i < 5; i++) c += chars[Math.floor(Math.random() * chars.length)];
+    return c;
+  }
+
+  /* ---------------- ringtone (generated, no files) ---------------- */
+  function startRingtone() {
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); }
+    catch (_) { return; }
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+    const ring = () => {
+      const t = audioCtx.currentTime;
+      [440, 480].forEach((f) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.001, t);
+        g.gain.exponentialRampToValueAtTime(0.14, t + 0.05);
+        g.gain.setValueAtTime(0.14, t + 1.8);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 1.95);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 2);
+      });
+    };
+    ring();
+    ringTimer = setInterval(ring, 4000);
+  }
+  function stopRingtone() {
+    if (ringTimer) { clearInterval(ringTimer); ringTimer = null; }
+  }
+
+  /* ---------------- signaling ---------------- */
+  function sendSignal(data) {
+    fetch('/signal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, from: role, data }),
+    }).catch(() => {});
+  }
+
+  function openSignaling() {
+    let joinedOK = false;
+    es = new EventSource('/stream?code=' + code + '&role=' + role);
+
+    es.addEventListener('joined', () => { joinedOK = true; });
+
+    es.addEventListener('peer-joined', () => {
+      if (role !== 'host') return;
+      stopRingtone();
+      $('waiting-status').textContent = 'Connecting…';
+      (async () => {
+        try {
+          if (!pc) makePC();
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          sendSignal({ type: 'offer', sdp: pc.localDescription });
+        } catch (err) {
+          toast('Could not start the call: ' + err.message);
+        }
+      })();
+    });
+
+    es.addEventListener('peer-left', () => {
+      if (inCall) { toast('The call ended.'); endCall(); return; }
+      if (role === 'host') {
+        $('waiting-status').textContent = 'Waiting for someone to join…';
+        startRingtone();
+      } else {
+        toast('The other party ended the call.');
+        endCall();
+      }
+    });
+
+    es.addEventListener('signal', (e) => onSignal(JSON.parse(e.data)));
+
+    es.onerror = () => {
+      if (es.readyState !== EventSource.CLOSED) return;
+      if (!joinedOK) {
+        toast('That code could not be found. Check it and try again.');
+        endCall();
+      } else if (inCall) {
+        toast('Lost connection to the server.');
+        endCall();
+      } else {
+        toast('Connection to the server was lost.');
+        endCall();
+      }
+    };
+  }
+
+  /* ---------------- WebRTC ---------------- */
+  function makePC() {
+    pc = new RTCPeerConnection({
+      iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }],
+    });
+    localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+
+    pc.onicecandidate = (e) => {
+      if (!e.candidate) return;
+      // Show a same-network URL hint to the host (helps when peers share a Wi-Fi).
+      if (!pc._localIPShown) {
+        const m = e.candidate.candidate.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
+        if (m && !/^127\./.test(m[1]) && role === 'host' &&
+            /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(m[1])) {
+          pc._localIPShown = true;
+          $('local-url-hint').textContent =
+            'On the same Wi-Fi? Have them open http://' + m[1] + ':' + PORT + ' and enter this code.';
+          $('local-url-hint').classList.remove('hidden');
+        }
+      }
+      sendSignal({ type: 'candidate', candidate: e.candidate });
+    };
+
+    pc.ontrack = (e) => {
+      remoteAudio.srcObject = e.streams[0];
+      remoteAudio.play().catch(() => {});
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'connected') {
+        if (!inCall) enterCall();
+      } else if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+        if (inCall) { toast('The connection was lost.'); endCall(); }
+        else if (pc.onconnectionstatechange) { toast('Could not reach the other party.'); endCall(); }
+      }
+    };
+    return pc;
+  }
+
+  async function flushCandidates() {
+    while (pendingCandidates.length && pc && pc.remoteDescription) {
+      const c = pendingCandidates.shift();
+      await pc.addIceCandidate(c).catch(() => {});
+    }
+  }
+
+  async function onSignal(data) {
+    try {
+      if (data.type === 'offer' && role === 'caller') {
+        if (!localStream) {
+          localStream = await navigator.mediaDevices.getUserMedia(
+            { audio: { echoCancellation: true, noiseSuppression: true } });
+        }
+        if (!pc) makePC();
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        await flushCandidates();
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        sendSignal({ type: 'answer', sdp: pc.localDescription });
+      } else if (data.type === 'answer' && role === 'host') {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        await flushCandidates();
+      } else if (data.type === 'candidate') {
+        if (!pc || !pc.remoteDescription) pendingCandidates.push(data.candidate);
+        else await pc.addIceCandidate(data.candidate).catch(() => {});
+      }
+    } catch (err) {
+      toast('Call error: ' + err.message);
+      endCall();
+    }
+  }
+
+  /* ---------------- call flow ---------------- */
+  async function startCall() {
+    code = genCode();
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia(
+        { audio: { echoCancellation: true, noiseSuppression: true } });
+    } catch (_) {
+      toast('Microphone access is required to make calls.');
+      return;
+    }
+    role = 'host';
+    $('code-display').textContent = code;
+    $('local-url-hint').classList.add('hidden');
+    show('screen-waiting');
+    startRingtone();
+    openSignaling();
+  }
+
+  async function callWithInput() {
+    const c = $('code-input').value.trim().toUpperCase();
+    if (c.length !== 5) { toast('Enter the 5-character code.'); return; }
+    code = c;
+    role = 'caller';
+    $('connecting-text').textContent = 'Calling ' + code + '…';
+    show('screen-connecting');
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia(
+        { audio: { echoCancellation: true, noiseSuppression: true } });
+    } catch (_) {
+      toast('Microphone access is required to make calls.');
+      endCall();
+      return;
+    }
+    noAnswerTimeout = setTimeout(() => {
+      if (!inCall) { toast('No answer. The other side may not be on the line.'); endCall(); }
+    }, 45000);
+    openSignaling();
+  }
+
+  function enterCall() {
+    inCall = true;
+    stopRingtone();
+    clearTimeout(noAnswerTimeout);
+    $('call-name').textContent = role === 'host' ? 'Incoming caller' : 'Your call';
+    show('screen-call');
+    callStart = Date.now();
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 500);
+  }
+
+  function updateTimer() {
+    const s = Math.max(0, Math.floor((Date.now() - callStart) / 1000));
+    $('call-timer').textContent =
+      String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function endCall() {
+    inCall = false;
+    stopRingtone();
+    clearTimeout(noAnswerTimeout);
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    if (pc) {
+      pc.onconnectionstatechange = null;
+      pc.onicecandidate = null;
+      pc.ontrack = null;
+      try { pc.close(); } catch (_) {}
+      pc = null;
+    }
+    if (es) { es.close(); es = null; }
+    if (localStream) { localStream.getTracks().forEach((t) => t.stop()); localStream = null; }
+    if (remoteAudio.srcObject) remoteAudio.srcObject = null;
+    pendingCandidates = [];
+    code = null; role = null;
+    muted = false;
+    $('btn-mute').classList.remove('active');
+    $('btn-mute').querySelector('.ic-mic').classList.remove('hidden');
+    $('btn-mute').querySelector('.ic-mic-off').classList.add('hidden');
+    $('code-input').value = '';
+    show('screen-home');
+  }
+
+  /* ---------------- wiring ---------------- */
+  if (!window.isSecureContext) $('https-warning').classList.remove('hidden');
+
+  $('btn-start').addEventListener('click', startCall);
+  $('btn-call').addEventListener('click', callWithInput);
+  $('code-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') callWithInput(); });
+  $('btn-cancel').addEventListener('click', () => { toast('Call canceled.'); endCall(); });
+  $('btn-cancel-call').addEventListener('click', () => endCall());
+  $('btn-end').addEventListener('click', () => endCall());
+
+  const doCopy = async () => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch (_) {
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      ta.remove();
+    }
+    toast('Code copied!');
+  };
+  $('btn-copy').addEventListener('click', doCopy);
+  $('code-display').addEventListener('click', doCopy);
+
+  $('btn-mute').addEventListener('click', () => {
+    if (!localStream) return;
+    const track = localStream.getAudioTracks()[0];
+    if (!track) return;
+    muted = !muted;
+    track.enabled = !muted;
+    $('btn-mute').classList.toggle('active', muted);
+    $('btn-mute').querySelector('.ic-mic').classList.toggle('hidden', muted);
+    $('btn-mute').querySelector('.ic-mic-off').classList.toggle('hidden', !muted);
+  });
+})();
+</script>
+</body>
+</html>
